@@ -3,7 +3,7 @@
   * @brief This file contains the init functions for BlueTooth
   * driver.
   *
-  * Copyright (C) 2011-2012, Marvell International Ltd.
+  * Copyright (C) 2011-2013, Marvell International Ltd.
   *
   * This software file (the "File") is distributed by Marvell International
   * Ltd. under the terms of the GNU General Public License Version 2, June 1991
@@ -30,7 +30,7 @@
 			 || ('A' <= (c) && (c) <= 'F'))
 
 #define isdigit(c)	(('0' <= (c) && (c) <= '9'))
-#define isspace(c)  (c <= ' ' && (c == ' ' || (c <= 13 && c >=9)))
+#define isspace(c)  (c <= ' ' && (c == ' ' || (c <= 13 && c >= 9)))
 /**
  *  @brief Returns hex value of a give character
  *
@@ -116,7 +116,7 @@ bt_strsep(char **s, char delim, char esc)
  *  @return	hex value
  */
 static int
-bt_atox(char *a)
+bt_atox(const char *a)
 {
 	int i = 0;
 	ENTER();
@@ -199,35 +199,46 @@ bt_atoi(int *data, char *a)
  *
  *  @return        BT_STATUS_SUCCESS or BT_STATUS_FAILURE
  */
-static u32
-bt_parse_cal_cfg(u8 * src, u32 len, u8 * dst, u32 dst_size)
+static int
+bt_parse_cal_cfg(const u8 * src, u32 len, u8 * dst, u32 * dst_size)
 {
-	u8 *ptr;
+	const u8 *ptr;
 	u8 *dptr;
+	u32 count = 0;
+	int ret = BT_STATUS_FAILURE;
 
 	ENTER();
 	ptr = src;
 	dptr = dst;
 
-	while (ptr - src < len) {
-		if (*ptr && (isspace(*ptr) || *ptr == '\t')) {
+	while ((ptr - src) < len) {
+		if (*ptr && isspace(*ptr)) {
 			ptr++;
 			continue;
 		}
 
 		if (isxdigit(*ptr)) {
+			if ((dptr - dst) >= *dst_size) {
+				PRINTM(ERROR, "cal_file size too big!!!\n");
+				goto done;
+			}
 			*dptr++ = bt_atox(ptr);
 			ptr += 2;
+			count++;
 		} else {
 			ptr++;
 		}
-		if ((dptr - dst) > dst_size) {
-			PRINTM(ERROR, "cal_file size too big!!!\n");
-			break;
-		}
 	}
+	if (dptr == dst) {
+		ret = BT_STATUS_FAILURE;
+		goto done;
+	}
+
+	*dst_size = count;
+	ret = BT_STATUS_SUCCESS;
+done:
 	LEAVE();
-	return (dptr - dst);
+	return ret;
 }
 
 /**
@@ -241,7 +252,7 @@ bt_parse_cal_cfg(u8 * src, u32 len, u8 * dst, u32 dst_size)
 int
 parse_cfg_get_line(u8 * data, u32 size, u8 * line_pos)
 {
-	static s32 pos = 0;
+	static s32 pos;
 	u8 *src, *dest;
 
 	if (pos >= size) {	/* reach the end */
@@ -330,10 +341,8 @@ bt_process_init_cfg(bt_private * priv, u8 * data, u32 size)
 					/* Convert MAC format */
 					bt_mac2u8(bt_mac, bt_addr);
 					PRINTM(CMD,
-					       "HCI: %s new BT Address %02x:%02x:%02x:%02x:%02x:%02x\n",
-					       dev_name, bt_mac[0], bt_mac[1],
-					       bt_mac[2], bt_mac[3], bt_mac[4],
-					       bt_mac[5]);
+					       "HCI: %s new BT Address " MACSTR
+					       "\n", dev_name, MAC2STR(bt_mac));
 					if (BT_STATUS_SUCCESS !=
 					    bt_set_mac_address(priv, bt_mac)) {
 						PRINTM(FATAL,
@@ -490,29 +499,60 @@ bt_process_cal_cfg(bt_private * priv, u8 * data, u32 size, char *mac)
 {
 	u8 bt_mac[ETH_ALEN];
 	u8 cal_data[32];
+	u8 *mac_data = NULL;
+	u32 cal_data_len;
 	int ret = BT_STATUS_FAILURE;
 
 	memset(bt_mac, 0, sizeof(bt_mac));
-	bt_parse_cal_cfg(data, size, cal_data, sizeof(cal_data));
+	cal_data_len = sizeof(cal_data);
+	if (BT_STATUS_SUCCESS !=
+	    bt_parse_cal_cfg(data, size, cal_data, &cal_data_len)) {
+		goto done;
+	}
 	if (mac != NULL) {
 		/* Convert MAC format */
 		bt_mac2u8(bt_mac, mac);
-		PRINTM(CMD,
-		       "HCI: new BT Address %02x:%02x:%02x:%02x:%02x:%02x\n",
-		       bt_mac[0], bt_mac[1], bt_mac[2], bt_mac[3], bt_mac[4],
-		       bt_mac[5]);
-		if (BT_STATUS_SUCCESS !=
-		    bt_load_cal_data(priv, cal_data, bt_mac)) {
-			PRINTM(FATAL, "BT: Fail to load calibrate data\n");
-			goto done;
-		}
-	} else {
-		if (BT_STATUS_SUCCESS != bt_load_cal_data(priv, cal_data, NULL)) {
-			PRINTM(FATAL, "BT: Fail to load calibrate data\n");
-			goto done;
-		}
+		PRINTM(CMD, "HCI: new BT Address " MACSTR "\n",
+		       MAC2STR(bt_mac));
+		mac_data = bt_mac;
 	}
+	if (BT_STATUS_SUCCESS != bt_load_cal_data(priv, cal_data, mac_data)) {
+		PRINTM(FATAL, "BT: Fail to load calibrate data\n");
+		goto done;
+	}
+	ret = BT_STATUS_SUCCESS;
 
+done:
+	LEAVE();
+	return ret;
+}
+
+/**
+ *    @brief BT process calibration EXT data
+ *
+ *    @param priv    a pointer to bt_private structure
+ *    @param data    a pointer to cal data
+ *    @param size    cal data size
+ *    @param mac     mac address buf
+ *    @return         BT_STATUS_SUCCESS or BT_STATUS_FAILURE
+ */
+int
+bt_process_cal_cfg_ext(bt_private * priv, u8 * data, u32 size)
+{
+	u8 cal_data[128];
+	u32 cal_data_len;
+	int ret = BT_STATUS_FAILURE;
+
+	cal_data_len = sizeof(cal_data);
+	if (BT_STATUS_SUCCESS !=
+	    bt_parse_cal_cfg(data, size, cal_data, &cal_data_len)) {
+		goto done;
+	}
+	if (BT_STATUS_SUCCESS !=
+	    bt_load_cal_data_ext(priv, cal_data, cal_data_len)) {
+		PRINTM(FATAL, "BT: Fail to load calibrate data\n");
+		goto done;
+	}
 	ret = BT_STATUS_SUCCESS;
 
 done:
@@ -548,6 +588,63 @@ bt_cal_config(bt_private * priv, char *cal_file, char *mac)
 done:
 	if (cfg)
 		release_firmware(cfg);
+	LEAVE();
+	return ret;
+}
+
+/**
+ *    @brief BT process calibration EXT file
+ *
+ *    @param priv    a pointer to bt_private structure
+ *    @param cal_file calibration file name
+ *    @param mac     mac address buf
+ *    @return         BT_STATUS_SUCCESS or BT_STATUS_FAILURE
+ */
+int
+bt_cal_config_ext(bt_private * priv, char *cal_file)
+{
+	const struct firmware *cfg = NULL;
+	int ret = BT_STATUS_SUCCESS;
+
+	ENTER();
+	if ((request_firmware(&cfg, cal_file, priv->hotplug_device)) < 0) {
+		PRINTM(FATAL, "BT: request_firmware() %s failed\n", cal_file);
+		ret = BT_STATUS_FAILURE;
+		goto done;
+	}
+	if (cfg)
+		ret = bt_process_cal_cfg_ext(priv, (u8 *) cfg->data, cfg->size);
+	else
+		ret = BT_STATUS_FAILURE;
+done:
+	if (cfg)
+		release_firmware(cfg);
+	LEAVE();
+	return ret;
+}
+
+/**
+ *    @brief BT init mac address from bt_mac parametre when insmod
+ *
+ *    @param priv    a pointer to bt_private structure
+ *    @param bt_mac  mac address buf
+ *    @return        BT_STATUS_SUCCESS or BT_STATUS_FAILURE
+ */
+int
+bt_init_mac_address(bt_private * priv, char *mac)
+{
+	u8 bt_mac[ETH_ALEN];
+	int ret = BT_STATUS_FAILURE;
+
+	ENTER();
+	memset(bt_mac, 0, sizeof(bt_mac));
+	bt_mac2u8(bt_mac, mac);
+	PRINTM(CMD, "HCI: New BT Address " MACSTR "\n", MAC2STR(bt_mac));
+	ret = bt_set_mac_address(priv, bt_mac);
+	if (ret != BT_STATUS_SUCCESS)
+		PRINTM(FATAL,
+		       "BT: Fail to set mac address from insmod parametre.\n");
+
 	LEAVE();
 	return ret;
 }
