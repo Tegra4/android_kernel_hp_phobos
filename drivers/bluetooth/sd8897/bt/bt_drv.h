@@ -2,7 +2,7 @@
  *  @brief This header file contains global constant/enum definitions,
  *  global variable declaration.
  *
- *  Copyright (C) 2007-2012, Marvell International Ltd.
+ *  Copyright (C) 2007-2013, Marvell International Ltd.
  *
  *  This software file (the "File") is distributed by Marvell International
  *  Ltd. under the terms of the GNU General Public License Version 2, June 1991
@@ -54,6 +54,16 @@ typedef u32 t_ptr;
 /** Define maximum number of radio func supported */
 #define MAX_RADIO_FUNC     4
 
+/** MAC address print format */
+#ifndef MACSTR
+#define MACSTR "%02x:%02x:%02x:%02x:%02x:%02x"
+#endif
+
+/** MAC address print arguments */
+#ifndef MAC2STR
+#define MAC2STR(a) (a)[0], (a)[1], (a)[2], (a)[3], (a)[4], (a)[5]
+#endif
+
 /** Debug level : Message */
 #define	DBG_MSG			BIT(0)
 /** Debug level : Fatal */
@@ -86,11 +96,14 @@ extern u32 mbt_drvdbg;
 
 #ifdef	DEBUG_LEVEL2
 /** Print informative message */
-#define	PRINTM_INFO(msg...)  do {if (mbt_drvdbg & DBG_INFO)  printk(KERN_DEBUG msg); } while (0)
+#define	PRINTM_INFO(msg...)  do {if (mbt_drvdbg & DBG_INFO)  \
+									printk(KERN_DEBUG msg); } while (0)
 /** Print warning message */
-#define	PRINTM_WARN(msg...)  do {if (mbt_drvdbg & DBG_WARN)  printk(KERN_DEBUG msg); } while (0)
+#define	PRINTM_WARN(msg...)  do {if (mbt_drvdbg & DBG_WARN)  \
+									printk(KERN_DEBUG msg); } while (0)
 /** Print entry message */
-#define	PRINTM_ENTRY(msg...) do {if (mbt_drvdbg & DBG_ENTRY) printk(KERN_DEBUG msg); } while (0)
+#define	PRINTM_ENTRY(msg...) do {if (mbt_drvdbg & DBG_ENTRY) \
+									printk(KERN_DEBUG msg); } while (0)
 #else
 /** Print informative message */
 #define	PRINTM_INFO(msg...)  do {} while (0)
@@ -101,24 +114,33 @@ extern u32 mbt_drvdbg;
 #endif /* DEBUG_LEVEL2 */
 
 /** Print interrupt message */
-#define	PRINTM_INTR(msg...)  do {if (mbt_drvdbg & DBG_INTR)  printk(KERN_DEBUG msg); } while (0)
+#define	PRINTM_INTR(msg...)  do {if (mbt_drvdbg & DBG_INTR)  \
+									printk(KERN_DEBUG msg); } while (0)
 /** Print event message */
-#define	PRINTM_EVENT(msg...) do {if (mbt_drvdbg & DBG_EVENT) printk(KERN_DEBUG msg); } while (0)
+#define	PRINTM_EVENT(msg...) do {if (mbt_drvdbg & DBG_EVENT) \
+									printk(KERN_DEBUG msg); } while (0)
 /** Print command message */
-#define	PRINTM_CMD(msg...)   do {if (mbt_drvdbg & DBG_CMD)   printk(KERN_DEBUG msg); } while (0)
+#define	PRINTM_CMD(msg...)   do {if (mbt_drvdbg & DBG_CMD)   \
+									printk(KERN_DEBUG msg); } while (0)
 /** Print data message */
-#define	PRINTM_DATA(msg...)  do {if (mbt_drvdbg & DBG_DATA)  printk(KERN_DEBUG msg); } while (0)
+#define	PRINTM_DATA(msg...)  do {if (mbt_drvdbg & DBG_DATA)  \
+									printk(KERN_DEBUG msg); } while (0)
 /** Print error message */
-#define	PRINTM_ERROR(msg...) do {if (mbt_drvdbg & DBG_ERROR) printk(KERN_ERR msg); } while (0)
+#define	PRINTM_ERROR(msg...) do {if (mbt_drvdbg & DBG_ERROR) \
+									printk(KERN_ERR msg); } while (0)
 /** Print fatal message */
-#define	PRINTM_FATAL(msg...) do {if (mbt_drvdbg & DBG_FATAL) printk(KERN_ERR msg); } while (0)
+#define	PRINTM_FATAL(msg...) do {if (mbt_drvdbg & DBG_FATAL) \
+									printk(KERN_ERR msg); } while (0)
 /** Print message */
-#define	PRINTM_MSG(msg...)   do {if (mbt_drvdbg & DBG_MSG)   printk(KERN_ALERT msg); } while (0)
+#define	PRINTM_MSG(msg...)   do {if (mbt_drvdbg & DBG_MSG)   \
+									printk(KERN_ALERT msg); } while (0)
 
 /** Print data dump message */
-#define	PRINTM_DAT_D(msg...)  do {if (mbt_drvdbg & DBG_DAT_D)  printk(KERN_DEBUG msg); } while (0)
+#define	PRINTM_DAT_D(msg...)  do {if (mbt_drvdbg & DBG_DAT_D)  \
+									printk(KERN_DEBUG msg); } while (0)
 /** Print data dump message */
-#define	PRINTM_CMD_D(msg...)  do {if (mbt_drvdbg & DBG_CMD_D)  printk(KERN_DEBUG msg); } while (0)
+#define	PRINTM_CMD_D(msg...)  do {if (mbt_drvdbg & DBG_CMD_D)  \
+									printk(KERN_DEBUG msg); } while (0)
 
 /** Print message with required level */
 #define	PRINTM(level, msg...) PRINTM_##level(msg)
@@ -154,28 +176,30 @@ hexdump(char *prompt, u8 * buf, int len)
 }
 
 /** Debug hexdump of debug data */
-#define DBG_HEXDUMP_DAT_D(x, y, z)     do {if (mbt_drvdbg & DBG_DAT_D) hexdump(x, y, z); } while (0)
+#define DBG_HEXDUMP_DAT_D(x, y, z)     do {if (mbt_drvdbg & DBG_DAT_D) \
+											hexdump(x, y, z); } while (0)
 /** Debug hexdump of debug command */
-#define DBG_HEXDUMP_CMD_D(x, y, z)     do {if (mbt_drvdbg & DBG_CMD_D) hexdump(x, y, z); } while (0)
+#define DBG_HEXDUMP_CMD_D(x, y, z)     do {if (mbt_drvdbg & DBG_CMD_D) \
+											hexdump(x, y, z); } while (0)
 
 /** Debug hexdump */
 #define	DBG_HEXDUMP(level, x, y, z)    DBG_HEXDUMP_##level(x, y, z)
 
 /** Mark entry point */
-#define	ENTER()			PRINTM(ENTRY, "Enter: %s, %s:%i\n", __FUNCTION__, \
+#define	ENTER()			PRINTM(ENTRY, "Enter: %s, %s:%i\n", __func__, \
 							__FILE__, __LINE__)
 /** Mark exit point */
-#define	LEAVE()			PRINTM(ENTRY, "Leave: %s, %s:%i\n", __FUNCTION__, \
+#define	LEAVE()			PRINTM(ENTRY, "Leave: %s, %s:%i\n", __func__, \
 							__FILE__, __LINE__)
 #else
 /** Do nothing */
-#define	PRINTM(level, msg...) do {} while (0);
+#define	PRINTM(level, msg...) do {} while (0)
 /** Do nothing */
-#define DBG_HEXDUMP(level, x, y, z)    do {} while (0);
+#define DBG_HEXDUMP(level, x, y, z)    do {} while (0)
 /** Do nothing */
-#define	ENTER()  do {} while (0);
+#define	ENTER()  do {} while (0)
 /** Do nothing */
-#define	LEAVE()  do {} while (0);
+#define	LEAVE()  do {} while (0)
 #endif /* DEBUG_LEVEL1 */
 
 /** Bluetooth upload size */
@@ -210,8 +234,7 @@ hexdump(char *prompt, u8 * buf, int len)
 	wait_event_interruptible_timeout(waitq, cond, ((timeout) * HZ / 1000))
 #endif
 
-typedef struct
-{
+typedef struct {
 	/** Task */
 	struct task_struct *task;
 	/** Queue */
@@ -269,12 +292,11 @@ os_sched_timeout(u32 millisec)
 #endif
 
 #ifndef __ATTRIB_PACK__
-#define __ATTRIB_PACK__ __attribute__ ((packed))
+#define __ATTRIB_PACK__ __attribute__((packed))
 #endif
 
 /** Data structure for the Marvell Bluetooth device */
-typedef struct _bt_dev
-{
+typedef struct _bt_dev {
 	/** device name */
 	char name[DEV_NAME_LEN];
 	/** card pointer */
@@ -324,8 +346,7 @@ typedef struct _bt_dev
 	u32 sdio_pull_cfg;
 } bt_dev_t, *pbt_dev_t;
 
-typedef struct _bt_adapter
-{
+typedef struct _bt_adapter {
 	/** Chip revision ID */
 	u8 chip_rev;
 	/** Surprise removed flag */
@@ -377,8 +398,7 @@ typedef struct _bt_adapter
 /** Length of prov name */
 #define PROC_NAME_LEN				32
 
-struct item_data
-{
+struct item_data {
 	/** Name */
 	char name[PROC_NAME_LEN];
 	/** Size */
@@ -391,8 +411,7 @@ struct item_data
 	u32 flag;
 };
 
-struct proc_private_data
-{
+struct proc_private_data {
 	/** Name */
 	char name[PROC_NAME_LEN];
 	/** File flag */
@@ -409,8 +428,7 @@ struct proc_private_data
 	const struct file_operations *fops;
 };
 
-struct device_proc
-{
+struct device_proc {
 	/** Proc directory entry */
 	struct proc_dir_entry *proc_entry;
 	/** num of proc files */
@@ -420,8 +438,7 @@ struct device_proc
 };
 
 /** Private structure for the MV device */
-typedef struct _bt_private
-{
+typedef struct _bt_private {
 	/** Bluetooth device */
 	bt_dev_t bt_dev;
 	/** Adapter */
@@ -442,15 +459,19 @@ typedef struct _bt_private
 	spinlock_t driver_lock;
 	/** Driver lock flags */
 	ulong driver_flags;
+	/** Driver reference flags */
+	struct kobject kobj;
 	int debug_device_pending;
 	int debug_ocf_ogf[2];
 
 } bt_private, *pbt_private;
 
 /** Disable interrupt */
-#define OS_INT_DISABLE	spin_lock_irqsave(&priv->driver_lock, priv->driver_flags)
+#define OS_INT_DISABLE	spin_lock_irqsave(&priv->driver_lock, \
+											priv->driver_flags)
 /** Enable interrupt */
-#define	OS_INT_RESTORE	spin_unlock_irqrestore(&priv->driver_lock, priv->driver_flags)
+#define	OS_INT_RESTORE	spin_unlock_irqrestore(&priv->driver_lock, \
+											priv->driver_flags)
 
 #ifndef HCI_BT_AMP
 /** BT_AMP flag for device type */
@@ -573,18 +594,18 @@ int fm_set_intr_mask(bt_private * priv, u32 mask);
 /** default idle time */
 #define DEFAULT_IDLE_TIME           1000
 
-typedef struct _BT_CMD
-{
+#define BT_CMD_HEADER_SIZE    3
+
+typedef struct _BT_CMD {
 	/** OCF OGF */
 	u16 ocf_ogf;
 	/** Length */
 	u8 length;
 	/** Data */
-	u8 data[32];
+	u8 data[128];
 } __ATTRIB_PACK__ BT_CMD;
 
-typedef struct _BT_EVENT
-{
+typedef struct _BT_EVENT {
 	/** Event Counter */
 	u8 EC;
 	/** Length */
@@ -597,7 +618,10 @@ typedef struct _BT_EVENT
 int check_evtpkt(bt_private * priv, struct sk_buff *skb);
 
 /* Prototype of global function */
-
+/** This function gets the priv reference */
+struct kobject *bt_priv_get(bt_private * priv);
+/** This function release the priv reference */
+void bt_priv_put(bt_private * priv);
 /** This function adds the card */
 bt_private *bt_add_card(void *card);
 /** This function removes the card */
@@ -663,12 +687,13 @@ int sd_download_firmware_w_helper(bt_private * priv);
 #define BT_CMD_CSU_WRITE_REG		0x66
 /** Bluetooth command : Load calibrate data */
 #define BT_CMD_LOAD_CONFIG_DATA     0x61
+/** Bluetooth command : Load calibrate ext data */
+#define BT_CMD_LOAD_CONFIG_DATA_EXT     0x60
 
 /** Bluetooth command : BLE deepsleep */
 #define BT_CMD_BLE_DEEP_SLEEP       0x8b
 
-typedef struct _BT_BLE_CMD
-{
+typedef struct _BT_BLE_CMD {
 	/** OCF OGF */
 	u16 ocf_ogf;
 	/** Length */
@@ -677,8 +702,7 @@ typedef struct _BT_BLE_CMD
 	u8 deepsleep;
 } __ATTRIB_PACK__ BT_BLE_CMD;
 
-typedef struct _BT_CSU_CMD
-{
+typedef struct _BT_CSU_CMD {
 	/** OCF OGF */
 	u16 ocf_ogf;
 	/** Length */
@@ -699,11 +723,15 @@ int bt_write_reg(bt_private * priv, u8 type, u32 offset, u16 value);
 int bt_init_config(bt_private * priv, char *cfg_file);
 /** This function load the calibrate data */
 int bt_load_cal_data(bt_private * priv, u8 * config_data, u8 * mac);
+/** This function load the calibrate ext data */
+int bt_load_cal_data_ext(bt_private * priv, u8 * config_data, u32 cfg_data_len);
 /** BT set user defined calibration data */
 int bt_cal_config(bt_private * priv, char *cfg_file, char *mac);
+/** BT set user defined calibration ext data */
+int bt_cal_config_ext(bt_private * priv, char *cfg_file);
+int bt_init_mac_address(bt_private * priv, char *mac);
 
-typedef struct _BT_HCI_CMD
-{
+typedef struct _BT_HCI_CMD {
 	/** OCF OGF */
 	u16 ocf_ogf;
 	/** Length */

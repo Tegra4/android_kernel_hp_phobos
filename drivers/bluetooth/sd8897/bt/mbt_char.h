@@ -2,7 +2,7 @@
   *
   * @brief This file contains mbtchar driver specific defines etc
   *
-  * Copyright (C) 2010-2012, Marvell International Ltd.
+  * Copyright (C) 2010-2013, Marvell International Ltd.
   *
   * This software file (the "File") is distributed by Marvell International
   * Ltd. under the terms of the GNU General Public License Version 2, June 1991
@@ -28,6 +28,8 @@
 #define MBTCHAR_IOCTL_RELEASE       _IO('M', 1)
 #define MBTCHAR_IOCTL_QUERY_TYPE    _IO('M', 2)
 
+#define MBTCHAR_IOCTL_POWER_OFF     _IO('M', 3)
+
 #define MBTCHAR_MAJOR_NUM            (0)
 
 /** Interface specific macros */
@@ -37,13 +39,13 @@
 #define DEBUGCHAR_MINOR_BASE         (30)
 
 /** Declaration of char_dev struct */
-struct char_dev
-{
+struct char_dev {
 	struct list_head list;
 	int minor;
 	int dev_type;
 	struct cdev cdev;
 	struct m_dev *m_dev;
+	struct kobject kobj;
 };
 
 /** Changes permissions of the dev */
